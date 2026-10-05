@@ -10,3 +10,6 @@ SUPABASE_PUBLISHABLE_KEY = "sb_publishable_RDiDech0a_pltQYTIpFmMA_SW7gs9QD"
 CORS_ORIGIN = "*"
 TRUST_PROXY = "1"
 ANILIST_PROXY_URL = "https://kumo-anilist-proxy.vercel.app/api/graphql"
+
+[assets]
+directory = "./public"

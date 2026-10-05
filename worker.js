@@ -280,6 +280,18 @@ app.delete('/api/admin/episodes/:animeId/:number', async (c) => {
 
 app.get('/health', (c) => c.json({ ok: true }));
 
+// ---- Static frontend (public/) via Workers Static Assets ----
+app.get('*', async (c) => {
+  try {
+    if (!c.env.ASSETS) return c.json({ error: 'Tidak ditemukan' }, 404);
+    const asset = await c.env.ASSETS.fetch(c.req.raw);
+    if (asset.status !== 404) return asset;
+    return c.env.ASSETS.fetch(new Request(new URL('/', c.req.url)));
+  } catch {
+    return c.json({ error: 'Tidak ditemukan' }, 404);
+  }
+});
+
 // ---- Error handler ----
 app.onError((err, c) => {
   if (err instanceof HttpError) return c.json({ error: err.message }, err.code);
