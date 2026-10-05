@@ -6,20 +6,22 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { timingSafeEqual } from 'node:crypto';
 
-// ---- Config dari env ----
-const SB = (globalThis.SUPABASE_URL || '').replace(/\/$/, '');
-const PUB = globalThis.SUPABASE_PUBLISHABLE_KEY || '';
-const SECRET_KEY = globalThis.SUPABASE_SECRET_KEY || '';
-const ADMIN_KEY = globalThis.ADMIN_KEY || '';
-const ORIGIN = globalThis.CORS_ORIGIN || '*';
-const PROXY = globalThis.TRUST_PROXY === '1';
-
-if (!SB || !PUB) {
-  console.error('SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY wajib diisi');
-}
+// ---- Config dari env (diisi per-request dari c.env, bukan globalThis) ----
+let SB = '', PUB = '', SECRET_KEY = '', ADMIN_KEY = '', ORIGIN = '*', ANILIST_PROXY_URL = 'https://graphql.anilist.co';
 
 // ---- Hono app ----
 const app = new Hono();
+
+app.use('*', async (c, next) => {
+  const e = c.env || {};
+  SB = (e.SUPABASE_URL || '').replace(/\/$/, '');
+  PUB = e.SUPABASE_PUBLISHABLE_KEY || '';
+  SECRET_KEY = e.SUPABASE_SECRET_KEY || '';
+  ADMIN_KEY = e.ADMIN_KEY || '';
+  ORIGIN = e.CORS_ORIGIN || '*';
+  ANILIST_PROXY_URL = e.ANILIST_PROXY_URL || 'https://graphql.anilist.co';
+  await next();
+});
 
 app.use('*', cors({
   origin: ORIGIN,
@@ -90,7 +92,7 @@ async function gql(query, variables, ttl = 600000) {
   const c = cache.get(key);
   if (c && c.t > Date.now()) return c.v;
   try {
-    const proxyUrl = globalThis.ANILIST_PROXY_URL || 'https://graphql.anilist.co';
+    const proxyUrl = ANILIST_PROXY_URL;
     const r = await fetch(proxyUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': 'Kumo/1.1 (https://github.com/adiytharpansa/kumo)' },
