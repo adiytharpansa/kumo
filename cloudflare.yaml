@@ -1,0 +1,62 @@
+# Cloudflare Workers + Pages Blueprint for Kumo
+# Adapted from render.yaml
+
+# 1️⃣ WORKER: Backend API (Node.js server.js)
+# Menjalankan server Express/Node di Cloudflare Workers edge
+services:
+  - type: worker
+    name: kumo-api
+    runtime: nodejs18
+    # plan: free - gratis 100rb request/hari, tanpa kartu
+    # region: auto - memilih region terdekat
+    # autoDeploy: true (via git push)
+    buildCommand: echo "No build step, using inline server"
+    startCommand: node server.js
+    # health check path
+    # Catatan: Cloudflare Workers memiliki batasan (no fs, no crypto secara langsung)
+    # kita perlu adapt server.js agar pakai undici/fetch native
+
+# 2️⃣ PAGES: Frontend HTML (515 baris public/index.html)
+# Render HTML statis di Cloudflare Pages
+  - type: pages
+    name: kumo-frontend
+    # framework: nextjs (bisa, tapi kita pakai HTML sederhana)
+    # buildCommand: npm install && npm run build (atau hapus kalau tidak butuh)
+    # Jika ingin build manual: publish dir = .
+    # branch: main
+    # autoDeploy: true
+    
+# 3️⃣ ENV: Supabase & Admin
+# Secret harus diisi di Dashboard Cloudflare, tidak di commit ke git
+envVars:
+  # Publishable key bisa client-side
+  - key: SUPABASE_PUBLISHABLE_KEY
+    # value di-set di dashboard Cloudflare, bukan ke commit
+  # Secret key hanya di server/worker
+  - key: SUPABASE_SECRET_KEY
+    sync: false  # di-set di dashboard, tidak ikut code
+  - key: ADMIN_KEY
+    sync: false  # di-set di dashboard, tidak ikut code
+  - key: CORS_ORIGIN
+    value: "*"
+  - key: TRUST_PROXY
+    value: "1"
+
+# 4️⃣ CATATAN PENTING
+# Cloudflare Workers memiliki limitasi:
+# - Tidak bisa pakai `fs`, `path`, `crypto` modul Node.js bawaan
+# - Harus pakai `undici` (HTTP client) atau `node-fetch`
+# - Request size limit 1MB (kucil dari Render 600KB)
+# - Cold start ~2-5 detik, tapi steady-state cepat
+# - Bandwidth & request gratis hingga quota harian (cek dashboard)
+
+# 5️⃣ DEPLOY TAHAP
+# Langkah 1: Push repo ke GitHub
+# Langkah 2: di dashboard Cloudflare, buat new project -> Pages + Worker
+# Langkah 3: Set env var di tab Variables (SUPABASE_SECRET_KEY, ADMIN_KEY)
+# Langkah 4: `npx wrangler deploy` atau push ke main
+
+# 6️⃣ ADAPTASI server.js UNTUK WORKERS
+# - Ganti `import http from 'node:http'` dengan `import { createServer } from 'undici'`
+# - Ganti `fs.readFileSync` dengan `fetch` ke file di R2 (atau skip video feature)
+# - RLS Supabase tetap jalan via fetch API ke /rest/v1/

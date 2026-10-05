@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "description": "Backend Kumo: katalog AniList, akun dan sinkronisasi di Supabase, sumber video milik sendiri",
-  "scripts": { "start": "node server.js", "dev": "node --watch server.js" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "hono": "^4.5.0"
+  }
 }
