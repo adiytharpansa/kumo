@@ -84,6 +84,12 @@ async function getUser(req) {
   } catch { fail(401, 'Sesi berakhir, silakan masuk lagi'); }
 }
 
+async function optUser(req) {
+  const token = (req.headers.get('authorization') || '').replace(/^Bearer /, '');
+  if (!token) return null;
+  return getUser(req);
+}
+
 // ---- AniList GraphQL (dengan cache) ----
 const cache = new Map();
 
@@ -134,12 +140,12 @@ app.get('/meta/anilist/trending', async (c) => {
 });
 
 app.get('/meta/anilist/info/:id', async (c) => {
-  const user = await getUser(c.req.raw);
+  const user = await optUser(c.req.raw);
   const id = clampInt(c.req.param('id'), 0, 0, 1e9);
   if (!id) fail(400, 'ID tidak valid');
   const d = await gql(`query($id:Int){Media(id:$id,type:ANIME,isAdult:false){${MEDIA}}}`, { id }, 1800000);
   const m = d.Media;
-  const have = await sb(`/rest/v1/episodes?anime_id=eq.${id}&select=number,title&order=number`, { token: user.token }).catch(() => []);
+  const have = await sb(`/rest/v1/episodes?anime_id=eq.${id}&select=number,title&order=number`, { token: user && user.token }).catch(() => []);
   const titles = new Map(have.map((r) => [r.number, r.title]));
   const max = Math.min(500, Math.max(lastEp(m), ...have.map((r) => r.number), 0));
   const episodes = Array.from({ length: max }, (_, i) => ({
@@ -149,7 +155,8 @@ app.get('/meta/anilist/info/:id', async (c) => {
 });
 
 app.get('/meta/anilist/watch/:epId', async (c) => {
-  const user = await getUser(c.req.raw);
+  const user = await optUser(c.req.raw);
+  if (!user) fail(401, 'Masuk dulu untuk menonton video');
   const m = /^(\d+)-(\d+)$/.exec(c.req.param('epId'));
   if (!m) fail(400, 'ID episode tidak valid');
   const r = (await sb(`/rest/v1/episodes?anime_id=eq.${+m[1]}&number=eq.${+m[2]}&select=url`, { token: user.token }).catch(() => []))[0];

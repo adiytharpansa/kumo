@@ -21,7 +21,7 @@ Docker: `docker build -t kumo . && docker run -p 3000:3000 --env-file .env kumo`
 | `POST/GET/DELETE /api/admin/episodes` | Kelola video (`X-Admin-Key` + `SUPABASE_SECRET_KEY`) |
 
 ## Keamanan
-- **Kumo hanya untuk pengguna yang sudah login.** Tanpa login, tampilan hanya menampilkan layar masuk; katalog, jadwal, dan video ditolak server (401); tabel `episodes` hanya bisa dibaca role `authenticated`.
+- **Katalog dan jadwal publik, video dan sinkronisasi butuh login.** Tanpa login, pengguna bebas menjelajah; form login tampil di tab Profil dan saat memutar video; endpoint video (`watch`), `sync`, dan `me` ditolak server (401); tabel `episodes` hanya bisa dibaca role `authenticated`.
 - Batasan: link video mentah (mis. URL .m3u8 di CDN-mu) tetap bisa dibuka siapa pun yang tahu link-nya. Untuk perlindungan ketat, simpan video di Supabase Storage (bucket privat) dengan signed URL.
 - Ingin pendaftaran hanya lewat undangan? Matikan *Allow new users to sign up* di Authentication > Sign In / Providers, lalu undang pengguna dari dashboard.
 - Server memakai kunci publik; data pengguna diakses dengan token pengguna sehingga RLS yang menjaga isolasi data.

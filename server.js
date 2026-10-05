@@ -109,7 +109,7 @@ route('GET', '/meta/anilist/trending', async ({ url }) => {
 route('GET', '/meta/anilist/info/:id', async ({ params, user }) => {
   const id = clampInt(params.id, 0, 0, 1e9); if (!id) fail(400, 'ID tidak valid');
   const d = await gql(`query($id:Int){Media(id:$id,type:ANIME,isAdult:false){${MEDIA}}}`, { id }, 1800000);
-  const m = d.Media, have = await sb(`/rest/v1/episodes?anime_id=eq.${id}&select=number,title&order=number`, { token: user.token }).catch(() => []);
+  const m = d.Media, have = await sb(`/rest/v1/episodes?anime_id=eq.${id}&select=number,title&order=number`, { token: user && user.token }).catch(() => []);
   const titles = new Map(have.map(r => [r.number, r.title]));
   const max = Math.min(500, Math.max(lastEp(m), ...have.map(r => r.number)));
   const episodes = Array.from({ length: max }, (_, i) => ({
@@ -118,6 +118,7 @@ route('GET', '/meta/anilist/info/:id', async ({ params, user }) => {
   return { ...mapMedia(m), episodes };
 });
 route('GET', '/meta/anilist/watch/:epId', async ({ params, user }) => {
+  if (!user) fail(401, 'Masuk dulu untuk menonton video');
   const m = /^(\d+)-(\d+)$/.exec(params.epId); if (!m) fail(400, 'ID episode tidak valid');
   const r = (await sb(`/rest/v1/episodes?anime_id=eq.${+m[1]}&number=eq.${+m[2]}&select=url`, { token: user.token }).catch(() => []))[0];
   if (!r) fail(404, 'Sumber video belum tersedia');
@@ -246,8 +247,8 @@ http.createServer(async (req, res) => {
       if (limited('g:' + ip, 120)) fail(429, 'Terlalu banyak permintaan, coba lagi sebentar');
       if (r.o.rate && limited(`a:${pathname}:${ip}`, r.o.rate)) fail(429, 'Terlalu banyak percobaan, coba lagi nanti');
       const params = Object.fromEntries(Object.entries(m.groups || {}).map(([k, v]) => [k, decodeURIComponent(v)]));
-      // Semua katalog, jadwal, dan video hanya untuk pengguna yang sudah login.
-      const user = (r.o.auth || pathname.startsWith('/meta/') || pathname === '/api/schedule') ? await getUser(req) : null;
+      // Katalog dan jadwal publik; video, sinkron, dan akun butuh login.
+      const user = (r.o.auth || pathname.startsWith('/meta/anilist/watch/')) ? await getUser(req) : null;
       if (r.o.admin) {
         if (!ADMIN_KEY) fail(503, 'API admin nonaktif (ADMIN_KEY belum diisi)');
         if (!same(req.headers['x-admin-key'] || '', ADMIN_KEY)) fail(403, 'Kunci admin salah');
