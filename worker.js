@@ -180,9 +180,9 @@ app.get('/api/schedule', async (c) => {
     image: s.media.coverImage.large, episode: s.episode, airingAt: s.airingAt })) });
 });
 
-// ---- Auth (Supabase) ----
+// ---- Auth: email + Google OAuth via Supabase ----
+const session = (r) => ({ token: r.access_token, refresh: r.refresh_token, user: { id: r.user.id, email: r.user.email, name: r.user.user_metadata?.name || r.user.user_metadata?.full_name || 'Penonton' } });
 const validEmail = (e) => typeof e === 'string' && e.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-const session = (r) => ({ token: r.access_token, refresh: r.refresh_token, user: { id: r.user.id, email: r.user.email, name: r.user.user_metadata?.name || 'Penonton' } });
 const authErr = (e) => {
   if (e.status === 429) fail(429, 'Terlalu banyak percobaan, coba lagi nanti');
   if (e.code === 'email_not_confirmed') fail(403, 'Email belum dikonfirmasi. Cek kotak masukmu.');
@@ -217,6 +217,16 @@ app.post('/api/auth/login', async (c) => {
   } catch (e) { authErr(e); }
 });
 
+// Cek cepat ke Supabase: kalau provider Google belum diaktifkan, gagalkan di sini
+// agar aplikasi menampilkan pesan ramah (bukan melempar user ke halaman error mentah).
+async function googleReady() {
+  try {
+    const r = await fetch(SB + '/auth/v1/authorize?provider=google', { signal: AbortSignal.timeout(8000) });
+    if (r.status === 400 && /not enabled|unsupported provider/i.test(await r.text())) return false;
+    return true;
+  } catch { return true; } // Supabase tidak terjangkau: biarkan lanjut, browser tampilkan error aslinya
+}
+
 app.get('/api/auth/google', async (c) => {
   const reqUrl = new URL(c.req.url);
   let base = reqUrl.origin + '/';
@@ -227,6 +237,7 @@ app.get('/api/auth/google', async (c) => {
       if (n.protocol.startsWith('http') && n.origin === reqUrl.origin) base = n.toString();
     } catch { /* abaikan next tidak valid */ }
   }
+  if (!await googleReady()) fail(503, 'Login Google belum aktif. Aktifkan provider Google di dashboard Supabase.');
   return c.json({ url: SB + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(base) });
 });
 
