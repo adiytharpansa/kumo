@@ -1,0 +1,9 @@
+{
+  "name": "kumo-backend",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend Kumo: katalog AniList, akun dan sinkronisasi di Supabase, sumber video milik sendiri",
+  "scripts": { "start": "node server.js", "dev": "node --watch server.js" },
+  "engines": { "node": ">=20" }
+}

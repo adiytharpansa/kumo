@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: kumo
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: https://bigazaotrzqqqzttlygb.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_RDiDech0a_pltQYTIpFmMA_SW7gs9QD
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: TRUST_PROXY
+        value: "1"
