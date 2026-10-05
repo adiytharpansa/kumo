@@ -3,7 +3,7 @@ services:
     name: kumo
     runtime: node
     plan: free
-    region: singapore
+    region: oregon
     branch: main
     autoDeploy: true
     buildCommand: npm install
