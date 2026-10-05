@@ -163,6 +163,18 @@ route('POST', '/api/auth/login', async ({ body }) => {
   try { return session(await sb('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: String(body.email || '').trim().toLowerCase(), password: String(body.password || '') } })); }
   catch (e) { authErr(e); }
 }, { rate: 10 });
+route('GET', '/api/auth/google', async ({ req, url }) => {
+  const host = req.headers.host || 'localhost:3000';
+  let base = 'http://' + host + '/';
+  const next = url.searchParams.get('next');
+  if (next) {
+    try {
+      const n = new URL(next);
+      if (n.protocol.startsWith('http') && n.host === host) base = n.toString();
+    } catch { /* abaikan next tidak valid */ }
+  }
+  return { url: SB + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(base) };
+});
 route('POST', '/api/auth/refresh', async ({ body }) => {
   if (typeof body.refresh !== 'string' || body.refresh.length > 500) fail(400, 'Token tidak valid');
   try { return session(await sb('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: body.refresh } })); }

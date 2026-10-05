@@ -217,6 +217,19 @@ app.post('/api/auth/login', async (c) => {
   } catch (e) { authErr(e); }
 });
 
+app.get('/api/auth/google', async (c) => {
+  const reqUrl = new URL(c.req.url);
+  let base = reqUrl.origin + '/';
+  const next = c.req.query('next');
+  if (next) {
+    try {
+      const n = new URL(next);
+      if (n.protocol.startsWith('http') && n.origin === reqUrl.origin) base = n.toString();
+    } catch { /* abaikan next tidak valid */ }
+  }
+  return c.json({ url: SB + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(base) });
+});
+
 app.post('/api/auth/refresh', async (c) => {
   if (limited('a:/api/auth/refresh:' + (c.req.header('x-forwarded-for') || 'unknown'), 30)) fail(429, 'Terlalu banyak percobaan');
   const body = await c.req.json();
