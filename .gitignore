@@ -1,4 +1,4 @@
-data/
-.env
 node_modules/
-.wrangler/
+.next/
+arsip-proyek-lama/
+.env*.local

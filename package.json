@@ -1,17 +1,23 @@
 {
-  "name": "kumo-backend",
-  "version": "1.1.0",
+  "name": "kumo-hub",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "description": "Backend Kumo: katalog AniList, akun dan sinkronisasi di Supabase, sumber video milik sendiri",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "cf:dev": "wrangler dev",
-    "cf:deploy": "wrangler deploy"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
-  "engines": { "node": ">=20" },
   "dependencies": {
-    "hono": "^4.5.0"
+    "@consumet/extensions": "^1.8.8",
+    "artplayer": "^5.2.0",
+    "hls.js": "^1.5.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "tailwindcss": "^4.0.0"
   }
 }

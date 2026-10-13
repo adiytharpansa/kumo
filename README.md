@@ -1,41 +1,83 @@
-# Kumo
+# Media Hub — Dynamic Media Metadata Aggregation (Boilerplate)
 
-Frontend (`public/index.html`) + backend Node.js tanpa dependensi npm (Node 20+). Akun dan data di **Supabase** (proyek `kumo`, Singapura). Tabel dan RLS sudah terpasang.
+Boilerplate frontend Next.js (App Router) untuk proyek edukasi agregasi
+metadata media dinamis memakai library serverless `@consumet/extensions`
+secara internal — seluruh panggilan library berjalan eksklusif di Server
+Components (modul `lib/provider.js` bertanda `server-only`), tidak ada
+impor library di komponen klien, tanpa endpoint proksi publik.
 
-## Jalankan
+## Pilihan provider
+
+Spesifikasi menyebut **Zoro atau AnimePahe**. Pada `@consumet/extensions`
+versi terkini, modul "Zoro" sudah tidak ada (penerusnya bernama **Hianime**),
+jadi boilerplate ini memakai **AnimePahe** (`new ANIME.AnimePahe()`), sesuai
+pilihan yang diizinkan spesifikasi. Mengganti provider cukup di satu tempat:
+`lib/provider.js`.
+
+## ⚠️ Hasil uji lingkungan ini (13 Okt 2026)
+
+Domain sumber provider (animepahe.si) **tidak terjangkau dari jaringan
+lingkungan pengujian ini** (koneksi TLS ditolak di level jaringan; situs
+pembanding normal). Akibatnya panggilan provider gagal anggun dan semua
+halaman menampilkan fallback **"Server Connection Busy"** — persis perilaku
+defensif yang diminta spesifikasi, dan terbukti BUKAN crash 500. Di jaringan
+hosting yang dapat menjangkau domain sumber, halaman yang sama akan terisi
+data asli tanpa perubahan kode.
+
+## Inisialisasi
+
 ```bash
-cp .env.example .env     # URL dan publishable key Supabase sudah terisi
-node --env-file=.env server.js
-# buka http://localhost:3000
+npm install
+npm run dev        # http://localhost:3000
+npm run build && npm start
 ```
-Docker: `docker build -t kumo . && docker run -p 3000:3000 --env-file .env kumo`
 
-## Yang disediakan backend
-| Endpoint | Fungsi |
-|---|---|
-| `GET /meta/anilist/trending`, `/meta/anilist/:query`, `/meta/anilist/info/:id` | Katalog AniList (cache, konten dewasa disaring) |
-| `GET /meta/anilist/watch/:animeId-:nomor` | Sumber video dari tabel `episodes` |
-| `GET /api/schedule` | Jadwal rilis 7 hari (belum dipakai UI) |
-| `GET /api/auth/google`, `POST /api/auth/refresh`, `GET /api/me` | Akun via Google OAuth lewat Supabase Auth |
-| `GET/PUT /api/sync` | Sinkron Daftarku, riwayat, rating, pengaturan (dilindungi RLS) |
-| `POST/GET/DELETE /api/admin/episodes` | Kelola video (`X-Admin-Key` + `SUPABASE_SECRET_KEY`) |
+Syarat: Node.js 18.18+ (disarankan 20+), npm. Tidak ada variabel lingkungan
+wajib. Untuk mengaktifkan skrip iklan, isi:
 
-## Keamanan
-- **Katalog dan jadwal publik, video dan sinkronisasi butuh login Google.** Tanpa login, pengguna bebas menjelajah; tombol "Masuk dengan Google" tampil di tab Profil dan saat memutar video; endpoint video (`watch`), `sync`, dan `me` ditolak server (401); tabel `episodes` hanya bisa dibaca role `authenticated`.
-- Batasan: link video mentah (mis. URL .m3u8 di CDN-mu) tetap bisa dibuka siapa pun yang tahu link-nya. Untuk perlindungan ketat, simpan video di Supabase Storage (bucket privat) dengan signed URL.
-- Ingin pendaftaran hanya lewat undangan? Matikan *Allow new users to sign up* di Authentication > Sign In / Providers, lalu undang pengguna dari dashboard.
-- Server memakai kunci publik; data pengguna diakses dengan token pengguna sehingga RLS yang menjaga isolasi data.
-- Tabel `episodes` hanya bisa ditulis dengan secret key. Secret key tidak boleh masuk frontend atau repositori.
-- Pengecekan keamanan Supabase (advisors): bersih.
-
-## Pengaturan di dashboard Supabase (disarankan)
-- **Authentication > Providers > Google:** aktifkan provider Google dan isi Client ID/Secret. Nonaktifkan provider Email agar login hanya via Google.
-- **Authentication > Rate limits** dan **Attack protection** bisa diaktifkan.
-
-## Menambah video (hanya konten milikmu / berlisensi)
-```bash
-curl -X POST http://localhost:3000/api/admin/episodes \
-  -H "X-Admin-Key: $ADMIN_KEY" -H "Content-Type: application/json" \
-  -d '{"animeId":21,"number":1,"title":"Episode 1","url":"https://cdn-kamu.id/video/1/index.m3u8"}'
 ```
-`animeId` = ID AniList (angka di `anilist.co/anime/<id>`).
+NEXT_PUBLIC_ADSTERRA_SRC=<url skrip Adsterra>
+NEXT_PUBLIC_MONETAG_SRC=<url skrip Monetag>
+```
+
+## Struktur direktori
+
+```
+app/
+  layout.js                    kerangka + header
+  page.js                      [Main Dashboard Hub] Recent + Trending (ISR 300s)
+  loading.js, error.js         skeleton grid / fallback Server Connection Busy
+  details/[id]/page.js         [Content Detail Node] metadata + indeks episode
+  details/[id]/loading.js
+  watch/[episodeId]/page.js    [Media Playback Portal] stream + ad container
+  watch/[episodeId]/loading.js
+components/
+  Player.jsx        (klien) ArtPlayer + Hls.js (.m3u8) / fallback iframe
+  AdPlacement.jsx   (klien) div#ad-placement-container di bawah pemutar,
+                    skrip via next/script strategy="lazyOnload"
+  MediaCard.jsx, ServerBusy.jsx
+lib/
+  provider.js       SERVER-ONLY: singleton provider + cache + try/catch
+next.config.js      serverExternalPackages: ['@consumet/extensions']
+```
+
+Belum di-deploy.
+
+## Konsolidasi proyek (13 Okt 2026)
+
+Atas keputusan pemilik, proyek ini adalah SATU-SATUNYA proyek aktif.
+Proyek-proyek pendahulu tidak dihapus, melainkan digantikan oleh proyek
+ini dan sumbernya diarsipkan di `arsip-proyek-lama/`:
+
+- `arsip-proyek-lama/kumo-next/` — aplikasi Next.js + Supabase yang SEDANG
+  LIVE di https://kumo.adiyth-arpansa.workers.dev/ (sumbernya kini di
+  sini, termasuk cf.py dan .env.local; alur deploy live tidak berubah,
+  jalankan dari folder arsip itu).
+- `arsip-proyek-lama/kumo-stream/` — spesifikasi Consumet Gogoanime.
+- `arsip-proyek-lama/kumo-ak/` — aplikasi satu-berkas + seluruh tesnya.
+
+Catatan platform terverifikasi: library `@consumet/extensions` TIDAK bisa
+berjalan di Cloudflare Workers (dependensinya `got-scraping` gagal
+di-bundle untuk runtime Workers) — proyek ini membutuhkan host Node.js
+(Netlify/Render sesuai target spesifikasi), sehingga TIDAK menggantikan
+deployment Cloudflare yang live sampai ada keputusan hosting baru.
