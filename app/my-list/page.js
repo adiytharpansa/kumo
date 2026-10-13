@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import MediaCard from '../../components/MediaCard';
 import { readList, LIST_EVENT, syncList } from '../../lib/list';
 
-// Pustaka > Daftarku: judul yang disimpan pengguna. Lokal-pertama
-// (localStorage); tersinkron ke Supabase (tabel user_data, kunci
-// 'kumonime_list') bila pengguna masuk.
+// My List: judul yang disimpan pengguna. Lokal-pertama (localStorage);
+// tersinkron ke Supabase (tabel user_data, kunci 'kumonime_list') bila
+// pengguna masuk.
 export default function MyListPage() {
   const [items, setItems] = useState([]);
 
@@ -24,22 +24,21 @@ export default function MyListPage() {
   }, []);
 
   return (
-    <div>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 14px' }}>Pustaka</h1>
-      <div className="ktabs">
-        <b className="on">Daftarku{items.length ? ` (${items.length})` : ''}</b>
-      </div>
-      <p style={{ color: 'var(--mu)', fontSize: 12, marginBottom: 14 }}>
-        Tersimpan di perangkat ini — dan tersinkron ke akunmu saat masuk.
+    <div className="pt-5">
+      <h1 className="mb-1 text-lg font-bold">My List</h1>
+      <p className="mb-4 text-xs text-zinc-500">
+        Saved on this device — and synced to your account when you are signed in.
       </p>
       {items.length ? (
-        <div className="pgrid">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
           {items.map((item) => (
             <MediaCard key={item.id} item={item} />
           ))}
         </div>
       ) : (
-        <div className="empty">Daftar simpananmu masih kosong</div>
+        <p className="text-sm text-zinc-400">
+          Nothing saved yet. Open any title and tap “Add to My List”.
+        </p>
       )}
     </div>
   );

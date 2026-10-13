@@ -11,8 +11,7 @@ export default function ServerBusy() {
       </p>
       <a
         href=""
-        className="mt-6 inline-block px-5 py-2.5 text-sm font-semibold text-white"
-        style={{ background: 'var(--ac)', borderRadius: 12 }}
+        className="mt-6 inline-block rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white"
       >
         Reload
       </a>

@@ -59,13 +59,13 @@ export default function Player({ m3u8, iframeUrl }) {
   if (useIframe) {
     if (!iframeUrl) {
       return (
-        <div className="flex aspect-video w-full items-center justify-center bg-black text-sm text-zinc-400">
+        <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-black text-sm text-zinc-400">
           Stream unavailable for this episode.
         </div>
       );
     }
     return (
-      <div className="aspect-video w-full overflow-hidden bg-black">
+      <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
         <iframe
           src={iframeUrl}
           title="Media player"
@@ -79,7 +79,7 @@ export default function Player({ m3u8, iframeUrl }) {
   }
 
   return (
-    <div className="aspect-video w-full overflow-hidden bg-black">
+    <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
       <div ref={boxRef} className="h-full w-full" />
     </div>
   );

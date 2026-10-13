@@ -5,13 +5,9 @@ import ServerBusy from '../components/ServerBusy';
 
 export const revalidate = 300;
 
-const titleOf = (item) =>
-  typeof item?.title === 'string' ? item.title : item?.title?.english || item?.title?.romaji || '';
-
-// Beranda sesuai berkas desain pengguna: kolom pencarian, tab
-// Semua/Anime/Donghua, hero besar judul tren teratas, baris poster
-// "Sedang Tren" dan "Episode Terbaru" yang dapat digeser menyamping.
-// Semua isi dari data asli provider (bukan data tanam).
+// [Main Dashboard Hub] Server Component asinkron:
+// mengambil "Recent Releases" + "Top Trending Content" dari provider
+// server-side dan merender grid responsif Tailwind.
 export default async function HomePage() {
   const [recent, trending] = await Promise.all([getRecentReleases(1), getTrending()]);
   const recentList = (recent && recent.results) || [];
@@ -21,51 +17,13 @@ export default async function HomePage() {
     return <ServerBusy />;
   }
 
-  const hero = trendingList[0];
-
   return (
-    <div>
-      <form action="/jelajahi" className="ksearch">
-        <span aria-hidden>⌕</span>
-        <input name="q" placeholder="Cari anime, donghua..." aria-label="Cari judul" />
-      </form>
-
-      <div className="ktabs">
-        <b className="on">Semua</b>
-        <Link href="/jelajahi?g=Anime">Anime</Link>
-        <Link href="/jelajahi?g=Donghua">Donghua</Link>
-      </div>
-
-      {hero ? (
-        <>
-          <Link href={`/details/${encodeURIComponent(hero.id)}`} className="khero">
-            {hero.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={hero.image} alt={titleOf(hero)} />
-            ) : null}
-            <div>
-              <h2>{titleOf(hero)}</h2>
-              <p>
-                {[hero.type, hero.releaseDate, 'Sedang tren saat ini'].filter(Boolean).join(' · ')}
-              </p>
-            </div>
-          </Link>
-          <div className="kdots" aria-hidden>
-            {trendingList.slice(0, 5).map((_, i) => (
-              <i key={i} className={i === 0 ? 'on' : ''} />
-            ))}
-          </div>
-        </>
-      ) : null}
-
+    <div className="pt-5">
       {trendingList.length ? (
         <section>
-          <div className="krow">
-            <h2>Sedang Tren</h2>
-            <Link href="/jelajahi">Lihat Semua</Link>
-          </div>
-          <div className="kscroll">
-            {trendingList.map((item) => (
+          <h1 className="mb-3 text-lg font-bold">Top Trending Content</h1>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+            {trendingList.slice(0, 12).map((item) => (
               <MediaCard key={item.id} item={item} />
             ))}
           </div>
@@ -73,21 +31,24 @@ export default async function HomePage() {
       ) : null}
 
       {recentList.length ? (
-        <section>
-          <div className="krow">
-            <h2>Episode Terbaru</h2>
-            <Link href="/jadwal">Lihat Semua</Link>
-          </div>
-          <div className="kscroll">
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-bold">Recent Releases</h2>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
             {recentList.map((item) => {
               const epId = item.episodeId || item.id;
               return (
-                <MediaCard
-                  key={String(epId) + '-' + (item.episodeNumber || '')}
-                  item={item}
-                  badge={item.episodeNumber ? `EP ${item.episodeNumber}` : undefined}
-                  playHref={`/watch/${encodeURIComponent(epId)}`}
-                />
+                <div key={String(epId) + '-' + (item.episodeNumber || '')}>
+                  <MediaCard
+                    item={item}
+                    badge={item.episodeNumber ? `Ep ${item.episodeNumber}` : undefined}
+                  />
+                  <Link
+                    href={`/watch/${encodeURIComponent(epId)}`}
+                    className="mt-1.5 block rounded-lg bg-violet-600/90 py-1.5 text-center text-xs font-semibold text-white"
+                  >
+                    ▶ Watch
+                  </Link>
+                </div>
               );
             })}
           </div>
