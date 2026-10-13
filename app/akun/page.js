@@ -27,6 +27,7 @@ export default function AccountPage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [profileMsg, setProfileMsg] = useState('');
   const [profileBusy, setProfileBusy] = useState(false);
+  const [needConfirm, setNeedConfirm] = useState(false);
 
   useEffect(() => {
     const refresh = () => {
@@ -98,13 +99,23 @@ export default function AccountPage() {
     e.preventDefault();
     setBusy(true);
     setMsg('');
+    setNeedConfirm(false);
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            // Tautan di email konfirmasi kembali ke domain situs ini.
+            emailRedirectTo:
+              typeof window !== 'undefined' ? window.location.origin + '/akun' : undefined,
+          },
+        });
         if (error) throw error;
         if (data.session) {
           setMsg('Akun dibuat dan kamu sudah masuk.');
         } else {
+          setNeedConfirm(true);
           setMsg('Akun dibuat. Silakan konfirmasi lewat email yang kami kirim, lalu masuk di sini.');
         }
       } else {
@@ -113,7 +124,39 @@ export default function AccountPage() {
         setMsg('Berhasil masuk.');
       }
     } catch (err) {
-      setMsg(String((err && err.message) || err));
+      const raw = String((err && err.message) || err);
+      if (/email not confirmed/i.test(raw)) {
+        setNeedConfirm(true);
+        setMsg('Email akun ini belum dikonfirmasi. Buka email konfirmasi dari Supabase, atau kirim ulang dari tombol di bawah.');
+      } else if (/invalid login credentials/i.test(raw)) {
+        setMsg('Email atau kata sandi salah. Kalau baru daftar, pastikan akun sudah dikonfirmasi lewat email.');
+      } else {
+        setMsg(raw);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendConfirm() {
+    if (!email) {
+      setMsg('Isi email dulu, lalu kirim ulang konfirmasinya.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo:
+            typeof window !== 'undefined' ? window.location.origin + '/akun' : undefined,
+        },
+      });
+      if (error) throw error;
+      setMsg('Email konfirmasi dikirim ulang. Cek kotak masuk (dan folder spam) alamat email itu.');
+    } catch (err) {
+      setMsg(`Kirim ulang gagal: ${String((err && err.message) || err)}`);
     } finally {
       setBusy(false);
     }
@@ -316,6 +359,7 @@ export default function AccountPage() {
               onClick={() => {
                 setMode(mode === 'signup' ? 'signin' : 'signup');
                 setMsg('');
+                setNeedConfirm(false);
               }}
               style={{
                 width: '100%',
@@ -332,6 +376,17 @@ export default function AccountPage() {
               {mode === 'signup' ? 'Sudah punya akun? Masuk' : 'Baru di sini? Buat akun'}
             </button>
             {msg ? <p style={{ marginTop: 10, fontSize: 13 }}>{msg}</p> : null}
+            {needConfirm ? (
+              <button
+                type="button"
+                onClick={resendConfirm}
+                disabled={busy}
+                className="btn go"
+                style={{ width: '100%', marginTop: 10 }}
+              >
+                Kirim ulang email konfirmasi
+              </button>
+            ) : null}
           </div>
           <p style={{ fontSize: 12, color: 'var(--mu)', lineHeight: 1.6, margin: '10px 18px 0' }}>
             Masuk bersifat opsional — hanya untuk menyinkronkan Daftarku antar perangkat. Menjelajah
