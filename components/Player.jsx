@@ -7,7 +7,7 @@ import ProPlayer from './ProPlayer';
 // - .m3u8 langsung -> ProPlayer kustom (hls.js; kontrol, kualitas
 //   asli, subtitle .vtt) — komponen kiriman pengguna.
 // - Gagal fatal/tidak ada -> fallback iframe server embed.
-export default function Player({ m3u8, subtitle, iframeUrl, title, episodeLabel }) {
+export default function Player({ m3u8, subtitle, iframeUrl, title, episodeLabel, onProgress, resumeAt }) {
   const [useIframe, setUseIframe] = useState(!m3u8);
 
   if (useIframe) {
@@ -39,6 +39,8 @@ export default function Player({ m3u8, subtitle, iframeUrl, title, episodeLabel 
       title={title || ''}
       episodeLabel={episodeLabel || ''}
       onFatal={() => setUseIframe(true)}
+      onProgress={onProgress}
+      resumeAt={resumeAt || 0}
     />
   );
 }

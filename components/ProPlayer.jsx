@@ -22,10 +22,14 @@ import {
 // Galat fatal HLS -> onFatal() agar pemanggil jatuh ke embed iframe.
 const SPEED_OPTIONS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
-export default function ProPlayer({ src, subtitleUrl = null, title = '', episodeLabel = '', onFatal }) {
+export default function ProPlayer({ src, subtitleUrl = null, title = '', episodeLabel = '', onFatal, onProgress, resumeAt = 0 }) {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const hideTimerRef = useRef(null);
+  const progressCbRef = useRef(onProgress);
+  progressCbRef.current = onProgress;
+  const lastReportRef = useRef(0);
+  const resumedForRef = useRef('');
   const progressBarRef = useRef(null);
   const hlsRef = useRef(null);
   const fatalRef = useRef({ network: 0, media: 0 });
@@ -260,18 +264,41 @@ export default function ProPlayer({ src, subtitleUrl = null, title = '', episode
     const video = videoRef.current;
     if (!video) return;
 
+    const reportProgress = (force = false) => {
+      const cb = progressCbRef.current;
+      if (!cb || !video.duration) return;
+      const now = Date.now();
+      if (!force && now - lastReportRef.current < 5000) return;
+      lastReportRef.current = now;
+      try {
+        cb({ progress: Math.floor(video.currentTime || 0), duration: Math.floor(video.duration || 0) });
+      } catch (e) {}
+    };
     const onTimeUpdate = () => {
       setCurrentTime(video.currentTime);
       if (video.buffered.length > 0) {
         try { setBuffered(video.buffered.end(video.buffered.length - 1)); } catch (e) {}
       }
+      reportProgress(false);
     };
-    const onLoadedMetadata = () => setDuration(video.duration || 0);
+    const onLoadedMetadata = () => {
+      setDuration(video.duration || 0);
+      // Lanjutkan dari posisi terakhir (resume) sekali per sumber.
+      if (
+        resumeAt > 5 &&
+        video.duration &&
+        resumeAt < video.duration - 10 &&
+        resumedForRef.current !== src
+      ) {
+        resumedForRef.current = src;
+        try { video.currentTime = resumeAt; } catch (e) {}
+      }
+    };
     const onWaiting = () => setIsBuffering(true);
     const onPlaying = () => { setIsBuffering(false); setIsPlaying(true); };
     const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-    const onEnded = () => setIsPlaying(false);
+    const onPause = () => { setIsPlaying(false); reportProgress(true); };
+    const onEnded = () => { setIsPlaying(false); reportProgress(true); };
 
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -290,6 +317,7 @@ export default function ProPlayer({ src, subtitleUrl = null, title = '', episode
       video.removeEventListener('pause', onPause);
       video.removeEventListener('ended', onEnded);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatTime = (secs) => {

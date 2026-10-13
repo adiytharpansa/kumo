@@ -89,7 +89,7 @@ async function findEpisode(slug, epNumber, lang) {
   return null;
 }
 
-async function resolveOnClient(title, epNumber) {
+export async function resolveOnClient(title, epNumber) {
   const q = String(title || '').replace(/\s+/g, ' ').trim();
   if (!q || q.length < 3 || !Number.isFinite(Number(epNumber))) return null;
   const queries = [q];

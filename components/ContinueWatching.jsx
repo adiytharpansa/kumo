@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { readProgressMap } from '../lib/progress';
 
 export const HISTORY_KEY = 'kumonime_history';
 
@@ -19,9 +20,11 @@ export function readHistory() {
 // membuka halaman nonton). Kosong = seksi tidak tampil.
 export default function ContinueWatching() {
   const [items, setItems] = useState([]);
+  const [progress, setProgress] = useState({});
 
   useEffect(() => {
     setItems(readHistory());
+    setProgress(readProgressMap());
   }, []);
 
   if (!items.length) return null;
@@ -38,6 +41,18 @@ export default function ContinueWatching() {
                 <img src={h.image} alt={h.title} loading="lazy" />
               ) : null}
               <span className="ply">▶</span>
+              {progress[h.epId] && progress[h.epId].d > 0 ? (
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    bottom: 0,
+                    height: 4,
+                    width: `${Math.min(100, Math.round((progress[h.epId].p / progress[h.epId].d) * 100))}%`,
+                    background: 'var(--gr)',
+                  }}
+                />
+              ) : null}
             </Link>
             <div className="t">{h.title}</div>
             <small>Episode {h.ep}</small>
