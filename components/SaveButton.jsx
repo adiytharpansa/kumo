@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 import { hasItem, toggleItem, LIST_EVENT } from '../lib/list';
 
-// Tombol simpan "My List" di halaman detail. Bekerja lokal; otomatis
+// Tombol simpan Daftarku. Bekerja lokal (localStorage); otomatis
 // tersinkron ke Supabase bila pengguna sedang masuk.
-export default function SaveButton({ id, title, image }) {
+// Varian tampilan mengikuti berkas desain pengguna:
+// - "follow": tombol sekunder lebar (Ikuti / Diikuti) di halaman detail.
+// - "round": tombol bulat ⚑ di pojok hero detail.
+// - default: pil kecil.
+export default function SaveButton({ id, title, image, variant = 'default' }) {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -19,17 +23,33 @@ export default function SaveButton({ id, title, image }) {
     };
   }, [id]);
 
+  const onClick = () => setSaved(toggleItem({ id, title, image }));
+
+  if (variant === 'round') {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="rb"
+        aria-label="Simpan ke Daftarku"
+        style={saved ? { color: 'var(--ac)' } : undefined}
+      >
+        {saved ? '✓' : '⚑'}
+      </button>
+    );
+  }
+
+  if (variant === 'follow') {
+    return (
+      <button type="button" onClick={onClick} className="kbtn g" style={{ flex: 1 }}>
+        {saved ? '✓ Diikuti' : '⚑ Ikuti'}
+      </button>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => setSaved(toggleItem({ id, title, image }))}
-      className={`mt-4 rounded-lg px-4 py-2 text-sm font-semibold ring-1 transition ${
-        saved
-          ? 'bg-violet-600 text-white ring-violet-400/60'
-          : 'bg-white/10 text-zinc-100 ring-white/15 hover:bg-white/15'
-      }`}
-    >
-      {saved ? '✓ In My List' : '+ Add to My List'}
+    <button type="button" onClick={onClick} className={saved ? 'kbtn' : 'kbtn g'}>
+      {saved ? '✓ Di Daftarku' : '+ Daftarku'}
     </button>
   );
 }
