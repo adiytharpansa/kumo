@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { syncList } from '../../lib/list';
+import { readList, syncList, LIST_EVENT } from '../../lib/list';
+import { readHistory, HISTORY_KEY } from '../../components/ContinueWatching';
 
-// Account page: email + password sign-in against the owner's Supabase
-// project ("kumo"). Password auth is used (instead of magic links) so
-// sign-in works on any domain without redirect configuration.
+// Halaman Profil sesuai berkas desain: avatar gradasi + nama,
+// statistik (Daftarku asli dari perangkat), grup akun/sinkron,
+// riwayat tontonan lokal, dan tombol Keluar.
+// Masuk memakai email + kata sandi ke proyek Supabase "kumo"
+// milik pengguna (tanpa tautan ajaib agar bekerja di domain apa pun).
 export default function AccountPage() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
@@ -15,6 +19,22 @@ export default function AccountPage() {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [listCount, setListCount] = useState(0);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const refresh = () => {
+      setListCount(readList().length);
+      setHistory(readHistory());
+    };
+    refresh();
+    window.addEventListener(LIST_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(LIST_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -24,7 +44,7 @@ export default function AccountPage() {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session ? session.user : null);
       if (event === 'SIGNED_IN') {
-        syncList().then((r) => setSyncMsg(r.ok ? 'My List synced.' : ''));
+        syncList().then((r) => setSyncMsg(r.ok ? 'Daftarku tersinkron.' : ''));
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -32,12 +52,14 @@ export default function AccountPage() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="pt-10">
-        <h1 className="text-2xl font-extrabold">Account</h1>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
-          Accounts are not configured on this deployment yet (Supabase environment variables are
-          missing). Browsing and My List still work locally on this device.
-        </p>
+      <div>
+        <h2 className="sec" style={{ marginTop: 12 }}>
+          Profil
+        </h2>
+        <div className="empty">
+          Akun belum dikonfigurasi di penerapan ini (variabel lingkungan Supabase belum terpasang).
+          Menjelajah dan Daftarku tetap bekerja lokal di perangkat ini.
+        </div>
       </div>
     );
   }
@@ -51,14 +73,14 @@ export default function AccountPage() {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         if (data.session) {
-          setMsg('Account created and signed in.');
+          setMsg('Akun dibuat dan kamu sudah masuk.');
         } else {
-          setMsg('Account created. Please confirm via the email we sent, then sign in here.');
+          setMsg('Akun dibuat. Silakan konfirmasi lewat email yang kami kirim, lalu masuk di sini.');
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        setMsg('Signed in.');
+        setMsg('Berhasil masuk.');
       }
     } catch (err) {
       setMsg(String((err && err.message) || err));
@@ -74,92 +96,152 @@ export default function AccountPage() {
   }
 
   async function manualSync() {
-    setSyncMsg('Syncing…');
+    setSyncMsg('Menyinkronkan…');
     const r = await syncList();
-    setSyncMsg(r.ok ? 'My List synced just now.' : `Sync failed: ${r.reason || 'unknown'}`);
+    setSyncMsg(r.ok ? 'Daftarku baru saja tersinkron.' : `Sinkron gagal: ${r.reason || 'tidak diketahui'}`);
   }
 
+  function clearHistory() {
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch (e) {}
+    setHistory([]);
+  }
+
+  const initial = (user && user.email ? user.email[0] : '☺').toUpperCase();
+
   return (
-    <div className="pt-10">
-      <h1 className="text-2xl font-extrabold">Account</h1>
-      {user ? (
-        <div className="mt-4 max-w-xl">
-          <p className="text-sm text-zinc-300">
-            Signed in as <span className="font-semibold text-white">{user.email}</span>
-          </p>
-          <p className="mt-1 text-sm text-zinc-500">
-            Your My List is stored on this device and synced to your account.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={manualSync}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Sync My List now
-            </button>
-            <button
-              type="button"
-              onClick={signOut}
-              className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold ring-1 ring-white/15"
-            >
-              Sign out
-            </button>
-          </div>
-          {syncMsg ? <p className="mt-3 text-sm text-zinc-400">{syncMsg}</p> : null}
+    <div>
+      <div className="pf">
+        <div className="av" aria-hidden>
+          {initial}
         </div>
+        <div className="who">
+          <b>{user ? user.email : 'Penonton'}</b>
+          <small>{user ? 'Kamu sedang masuk' : 'Belum masuk — Daftarku tersimpan lokal'}</small>
+        </div>
+      </div>
+
+      <div className="stt" style={{ margin: '16px 18px 0' }}>
+        <div>
+          <b>{listCount}</b>
+          <span>Daftarku</span>
+        </div>
+        <div>
+          <b>{history.length}</b>
+          <span>Riwayat</span>
+        </div>
+        <div>
+          <b>{user ? 'Aktif' : '—'}</b>
+          <span>Akun</span>
+        </div>
+      </div>
+
+      {user ? (
+        <>
+          <div className="secttl">AKUN</div>
+          <div className="sg">
+            <p style={{ fontSize: 14, lineHeight: 1.6 }}>
+              Masuk sebagai <b>{user.email}</b>. Daftarku tersimpan di perangkat ini dan tersinkron
+              ke akunmu.
+            </p>
+            {syncMsg ? (
+              <p style={{ fontSize: 13, color: 'var(--mu)', marginTop: 6 }}>{syncMsg}</p>
+            ) : null}
+            <button type="button" onClick={manualSync} className="btn go" style={{ width: '100%', marginTop: 12 }}>
+              ↻ Sinkronkan Daftarku
+            </button>
+          </div>
+          <button type="button" className="outl" onClick={signOut}>
+            ⎋ Keluar
+          </button>
+        </>
       ) : (
-        <form onSubmit={submit} className="mt-4 max-w-md space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-500">
-              Email
+        <form onSubmit={submit}>
+          <div className="secttl">{mode === 'signup' ? 'BUAT AKUN' : 'MASUK'}</div>
+          <div className="sg">
+            <label style={{ display: 'block', marginBottom: 10 }}>
+              <small style={{ display: 'block', color: 'var(--mu)', marginBottom: 4 }}>Email</small>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="kin"
+                placeholder="kamu@contoh.com"
+              />
             </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white ring-1 ring-white/15 outline-none focus:ring-violet-400"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-500">
-              Password
+            <label style={{ display: 'block' }}>
+              <small style={{ display: 'block', color: 'var(--mu)', marginBottom: 4 }}>Kata sandi</small>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="kin"
+                placeholder="••••••••"
+              />
             </label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white ring-1 ring-white/15 outline-none focus:ring-violet-400"
-              placeholder="••••••••"
-            />
+            <button type="submit" disabled={busy} className="btn go" style={{ width: '100%', marginTop: 14 }}>
+              {busy ? 'Mohon tunggu…' : mode === 'signup' ? 'Buat Akun' : 'Masuk'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'signup' ? 'signin' : 'signup');
+                setMsg('');
+              }}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                fontSize: 12,
+                color: 'var(--mu)',
+                textDecoration: 'underline',
+                marginTop: 12,
+                background: 'none',
+                border: 0,
+                cursor: 'pointer',
+              }}
+            >
+              {mode === 'signup' ? 'Sudah punya akun? Masuk' : 'Baru di sini? Buat akun'}
+            </button>
+            {msg ? <p style={{ marginTop: 10, fontSize: 13 }}>{msg}</p> : null}
           </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === 'signup' ? 'signin' : 'signup');
-              setMsg('');
-            }}
-            className="w-full text-center text-xs text-zinc-400 underline underline-offset-2"
-          >
-            {mode === 'signup' ? 'Already have an account? Sign in' : 'New here? Create an account'}
-          </button>
-          {msg ? <p className="text-sm text-zinc-300">{msg}</p> : null}
-          <p className="text-xs leading-relaxed text-zinc-500">
-            Signing in is optional — it only syncs your My List across devices. Browsing and
-            watching never require an account.
+          <p style={{ fontSize: 12, color: 'var(--mu)', lineHeight: 1.6, margin: '10px 18px 0' }}>
+            Masuk bersifat opsional — hanya untuk menyinkronkan Daftarku antar perangkat. Menjelajah
+            dan menonton tidak pernah memerlukan akun.
           </p>
         </form>
+      )}
+
+      <h2 className="sec">Riwayat tontonan</h2>
+      {history.length ? (
+        <>
+          <div style={{ padding: '0 18px' }}>
+            {history.map((h) => (
+              <Link key={h.id} href={`/watch/${encodeURIComponent(h.epId)}`} className="epl">
+                <span className="th">
+                  {h.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={h.image} alt="" loading="lazy" />
+                  ) : null}
+                </span>
+                <span className="eb">
+                  <b>{h.title}</b>
+                  <span>Episode {h.ep}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="chips" style={{ marginTop: 12 }}>
+            <button type="button" className="chip" onClick={clearHistory}>
+              Hapus riwayat
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="empty">Belum ada riwayat. Tonton episode pertamamu.</div>
       )}
     </div>
   );

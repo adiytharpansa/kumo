@@ -1,9 +1,1047 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Desain mengikuti berkas tampilan pilihan pengguna
+   (kumo-2_10_p259.html — "Kumo – Nonton Anime"):
+   font Bricolage Grotesque + Plus Jakarta Sans, tema terang
+   lavender & gelap ungu mengikuti perangkat, aksen gradasi
+   merah muda -> ungu, navigasi bawah, hero layar penuh.
+   Nilai token sama persis dengan berkas desain (keadaan akhir
+   setelah semua aturan timpa-menimpanya diterapkan).
+   ============================================================ */
 :root {
-  color-scheme: dark;
+  --bg: #f6f4fb;
+  --sf: #ffffff;
+  --sf2: #ece8f8;
+  --tx: #16132e;
+  --mu: #6a6590;
+  --ln: #e0daf2;
+  --ac: #f0457a;
+  --ac2: #6c4ff0;
+  --gr: linear-gradient(135deg, #f0457a, #8b5cf6);
+  --glass: rgba(255, 255, 255, 0.72);
+  --sh: 0 10px 30px -12px rgba(60, 40, 140, 0.28);
+  --sh2: 0 24px 60px -20px rgba(60, 40, 140, 0.35);
+  --hd: 'Bricolage Grotesque', system-ui, sans-serif;
+  --bd: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0b1a;
+    --sf: #181430;
+    --sf2: #241f46;
+    --tx: #f4f1ff;
+    --mu: #a49fca;
+    --ln: #2e2858;
+    --ac: #ff5c8a;
+    --ac2: #9b86ff;
+    --gr: linear-gradient(135deg, #ff5c8a, #8b6cff);
+    --glass: rgba(24, 20, 48, 0.72);
+    --sh: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+    --sh2: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  }
 }
 
 body {
-  @apply bg-[#0b0b14] text-zinc-100 antialiased;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--bd);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+body:before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 340px at 85% -5%, color-mix(in srgb, var(--ac2) 22%, transparent), transparent 70%),
+    radial-gradient(460px 320px at -10% 8%, color-mix(in srgb, var(--ac) 16%, transparent), transparent 70%);
+}
+h1, h2, h3, .logo, .nm, b {
+  font-family: var(--hd);
+}
+
+/* Kerangka: kolom tengah 560px (1120px di layar lebar) */
+.appcol {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 760px) {
+  .appcol {
+    max-width: 1120px;
+  }
+}
+
+/* --- Bar atas --- */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+.top.hm {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.top.hm .logo {
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.8px;
+}
+.logo i {
+  font-style: normal;
+  color: var(--ac);
+}
+.lm {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--gr);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--ac) 70%, transparent);
+  font-size: 15px;
+}
+.ib {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  color: var(--tx);
+}
+.top.hm .ib {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.avb {
+  font-family: var(--hd);
+  font-weight: 800;
+  background: var(--gr) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+
+/* --- Hero beranda (layar penuh) --- */
+.hero {
+  margin: 0;
+  border-radius: 0;
+  min-height: min(86svh, 760px);
+  padding: 96px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: var(--sf2);
+}
+.hero > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+.hero:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#0007 0%, #0000 26%, #000a 66%, #000d 90%, var(--bg) 100%);
+}
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+.hero h1 {
+  font-size: 42px;
+  line-height: 0.98;
+  letter-spacing: -1.5px;
+  font-weight: 800;
+  margin: 0 0 14px;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+}
+.bgs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.bgs span {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+}
+.bgs .ag {
+  background: #e5383b;
+}
+.hmeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.hgen {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  margin-bottom: 22px;
+}
+.hact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 480px;
+}
+.hact .btn {
+  flex: 1;
+  font-size: 16px;
+  padding: 15px 18px;
+}
+.ab {
+  flex: 0 0 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.ab .abi {
+  font-size: 22px;
+  line-height: 1;
+}
+.ab.on {
+  color: var(--ac);
+}
+.seg {
+  display: flex;
+  gap: 6px;
+  margin: 14px auto 0;
+  max-width: 180px;
+}
+.seg i {
+  flex: 1;
+  height: 4px;
+  border-radius: 9px;
+  background: var(--ln);
+}
+.seg i.on {
+  background: var(--gr);
+}
+@media (min-width: 760px) {
+  .hero {
+    min-height: 640px;
+    padding: 110px 44px 34px;
+    border-radius: 0 0 32px 32px;
+  }
+  .hero h1 {
+    font-size: 64px;
+    letter-spacing: -2.5px;
+  }
+}
+
+/* --- Tombol --- */
+.btn {
+  padding: 13px 22px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.pri {
+  background: #fff;
+  color: #16132e;
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.5);
+}
+.go {
+  background: var(--gr);
+  color: #fff;
+  box-shadow: 0 12px 24px -10px var(--ac);
+}
+.ol {
+  border: 1.5px solid var(--ln);
+  background: var(--sf);
+  color: var(--tx);
+}
+.ol.on {
+  color: var(--ac);
+  border-color: var(--ac);
+}
+
+/* --- Kepala seksi --- */
+h2.sec {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  padding: 0 18px;
+  margin: 30px 0 14px;
+}
+@media (min-width: 760px) {
+  h2.sec {
+    padding: 0 32px;
+  }
+}
+
+/* --- Baris geser & kartu poster --- */
+.sc {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 18px 14px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.sc::-webkit-scrollbar {
+  display: none;
+}
+.sc > .c {
+  flex: 0 0 124px;
+  scroll-snap-align: start;
+}
+.sc.lg > .c {
+  flex: 0 0 152px;
+}
+@media (min-width: 760px) {
+  .sc {
+    padding: 4px 32px 16px;
+  }
+  .sc > .c {
+    flex-basis: 160px;
+  }
+  .sc.lg > .c {
+    flex-basis: 180px;
+  }
+}
+.poster {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  background: var(--sf2);
+  color: #fff;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  width: 100%;
+  box-shadow: var(--sh);
+}
+.poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.poster:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#0000 40%, #000c);
+}
+.poster b {
+  font-size: 14px;
+  line-height: 1.15;
+  font-weight: 700;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+.sc.lg .poster b {
+  font-size: 15px;
+}
+.ptag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  background: var(--gr);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+}
+.c .t {
+  font-size: 13px;
+  margin-top: 8px;
+  font-weight: 700;
+  line-height: 1.25;
+  font-family: var(--hd);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sub {
+  color: var(--mu);
+  font-size: 12px;
+  font-weight: 500;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Kartu lanjutkan menonton (16:9) */
+.cw {
+  flex: 0 0 232px;
+  scroll-snap-align: start;
+}
+.cw .th {
+  aspect-ratio: 16/9;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  display: block;
+  box-shadow: var(--sh);
+  background: var(--sf2);
+}
+.cw .th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cw .th:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+.cw .ply {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  color: #fff;
+  font-size: 30px;
+}
+.cw .t {
+  font-weight: 700;
+  margin-top: 8px;
+  font-family: var(--hd);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cw small {
+  color: var(--mu);
+  font-size: 12px;
+  font-weight: 500;
+}
+@media (min-width: 760px) {
+  .cw {
+    flex-basis: 300px;
+  }
+}
+
+/* --- Chip & grid & pencarian --- */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 18px;
+}
+.chips.nowrap {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips.nowrap::-webkit-scrollbar {
+  display: none;
+}
+.chip {
+  padding: 9px 16px;
+  border-radius: 99px;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+  color: var(--tx);
+  cursor: pointer;
+}
+.chip.on {
+  background: var(--gr);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 18px -8px var(--ac);
+}
+@media (min-width: 760px) {
+  .chips {
+    padding: 0 32px;
+  }
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 0 18px;
+}
+@media (min-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+    padding: 0 32px;
+    gap: 18px;
+  }
+}
+.srch {
+  margin: 10px 18px 0;
+  display: block;
+  position: relative;
+}
+.srch input {
+  width: 100%;
+  padding: 15px 20px 15px 48px;
+  border-radius: 99px;
+  border: 1px solid var(--ln);
+  background: var(--sf);
+  color: var(--tx);
+  font: inherit;
+  font-size: 16px;
+  box-shadow: var(--sh);
+}
+.srch input:focus {
+  border-color: var(--ac);
+  outline: none;
+}
+.srch .sic {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mu);
+  font-size: 18px;
+  pointer-events: none;
+}
+@media (min-width: 760px) {
+  .srch {
+    margin: 10px 32px 0;
+    max-width: 560px;
+  }
+}
+.empty {
+  padding: 44px 30px;
+  text-align: center;
+  color: var(--mu);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 18px;
+  border: 1.5px dashed var(--ln);
+  border-radius: 20px;
+}
+@media (min-width: 760px) {
+  .empty {
+    margin: 0 32px;
+  }
+}
+
+/* --- Baris episode (Terbaru) --- */
+.ep {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 0 18px 12px;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 18px;
+  padding: 10px;
+  width: calc(100% - 36px);
+  box-shadow: var(--sh);
+  color: var(--tx);
+}
+.ep .th {
+  flex: 0 0 100px;
+  aspect-ratio: 16/10;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sf2);
+  position: relative;
+}
+.ep .th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ep b {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ep span {
+  font-size: 12px;
+  color: var(--mu);
+  font-weight: 500;
+}
+@media (min-width: 760px) {
+  .ep {
+    margin: 0 32px 12px;
+    width: calc(100% - 64px);
+    max-width: 720px;
+  }
+}
+
+/* --- Navigasi bawah --- */
+.bnav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border-top: 1px solid var(--ln);
+}
+.bnav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mu);
+  min-height: 52px;
+  justify-content: center;
+}
+.bnav a .nip {
+  display: grid;
+  place-items: center;
+  padding: 5px 20px;
+  border-radius: 99px;
+}
+.bnav a svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.bnav a.on {
+  color: var(--ac);
+}
+.bnav a.on .nip {
+  background: color-mix(in srgb, var(--ac) 16%, transparent);
+}
+@media (min-width: 760px) {
+  .bnav {
+    bottom: 14px;
+    width: calc(100% - 24px);
+    max-width: 520px;
+    border-radius: 26px;
+    border: 1px solid var(--ln);
+    padding: 7px;
+    box-shadow: var(--sh2);
+    background: var(--glass);
+  }
+}
+
+/* --- Detail: kepala panel + isi --- */
+.ph {
+  height: 230px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 18px;
+  color: #fff;
+  overflow: hidden;
+  background: var(--sf2);
+}
+.ph > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+}
+.ph:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#0000 30%, var(--bg));
+}
+.ph h1 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+  color: var(--tx);
+  line-height: 1.05;
+}
+.x {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+}
+.bd {
+  padding: 6px 18px 16px;
+}
+@media (min-width: 760px) {
+  .bd {
+    padding: 6px 32px 16px;
+  }
+  .ph {
+    border-radius: 0 0 28px 28px;
+  }
+}
+.stt {
+  display: flex;
+  gap: 10px;
+}
+.stt div {
+  flex: 1;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 16px;
+  padding: 12px 8px;
+  text-align: center;
+}
+.stt b {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.stt span {
+  font-size: 12px;
+  color: var(--mu);
+  font-weight: 500;
+}
+.chp2 {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.chp2 span {
+  background: var(--sf2);
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mu);
+}
+.bd p.syn {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--mu);
+  margin: 12px 0 18px;
+}
+.actrow {
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+.actrow .btn {
+  flex: 1;
+}
+.actrow .btn.sq {
+  flex: 0 0 52px;
+  padding: 12px;
+}
+.tb {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--ln);
+  margin: 22px 0 8px;
+}
+.tb a {
+  padding: 11px 16px;
+  font-weight: 700;
+  color: var(--mu);
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+}
+.tb a.on {
+  color: var(--tx);
+  border-color: var(--ac);
+}
+
+/* Baris episode di detail */
+.epl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ln);
+  width: 100%;
+  color: var(--tx);
+}
+.epl .th {
+  flex: 0 0 104px;
+  aspect-ratio: 16/10;
+  border-radius: 12px;
+  background: var(--sf2);
+  position: relative;
+  overflow: hidden;
+}
+.epl .th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.epl .th:after {
+  content: "▶";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.18);
+  color: #fff;
+  font-size: 15px;
+}
+.epl .eb {
+  flex: 1;
+  min-width: 0;
+}
+.epl .eb b {
+  display: block;
+  font-size: 15px;
+}
+.epl .eb span {
+  font-size: 13px;
+  color: var(--mu);
+}
+
+/* Nilai bintang lokal */
+.rate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 16px;
+  font-weight: 600;
+}
+.rate .stars {
+  display: flex;
+  gap: 2px;
+}
+.rate button {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ln);
+  padding: 2px 3px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.rate button.on {
+  color: #ffb020;
+}
+
+/* --- Profil / akun --- */
+.pf {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px 0;
+}
+.av {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gr);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 12px 26px -10px var(--ac);
+  font-family: var(--hd);
+  flex: none;
+}
+.pf .who {
+  flex: 1;
+  min-width: 0;
+}
+.pf .who b {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf small {
+  display: block;
+  color: var(--mu);
+  margin-top: 5px;
+  font-weight: 500;
+}
+@media (min-width: 760px) {
+  .pf {
+    padding: 14px 32px 0;
+  }
+}
+.sg {
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 18px;
+  overflow: hidden;
+  margin: 0 18px;
+  padding: 14px;
+  box-shadow: var(--sh);
+}
+@media (min-width: 760px) {
+  .sg {
+    margin: 0 32px;
+  }
+}
+.kin {
+  width: 100%;
+  background: var(--sf);
+  border: 1px solid var(--ln);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--tx);
+  outline: 0;
+  font: inherit;
+  font-size: 15px;
+}
+.kin:focus {
+  border-color: var(--ac);
+}
+.outl {
+  width: calc(100% - 36px);
+  margin: 20px 18px 0;
+  padding: 14px;
+  border-radius: 99px;
+  border: 1.5px solid var(--ln);
+  background: var(--sf);
+  color: #e5383b;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 15px;
+}
+@media (min-width: 760px) {
+  .outl {
+    width: calc(100% - 64px);
+    margin: 20px 32px 0;
+  }
+}
+.secttl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mu);
+  margin: 22px 18px 8px;
+}
+@media (min-width: 760px) {
+  .secttl {
+    margin: 22px 32px 8px;
+  }
+}
+
+/* Chip episode di halaman nonton */
+.epsx {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.epsx a {
+  min-width: 44px;
+  text-align: center;
+  padding: 9px;
+  border-radius: 12px;
+  background: var(--sf2);
+  color: var(--tx);
+  font-size: 13px;
+  font-weight: 600;
+}
+.epsx a.on {
+  background: var(--gr);
+  color: #fff;
+}
+
+/* Kerangka muat */
+.sk {
+  background: linear-gradient(90deg, var(--sf2), var(--sf), var(--sf2)) !important;
+  background-size: 200% 100% !important;
+  animation: sh 1.3s infinite linear;
+}
+@keyframes sh {
+  to {
+    background-position: -200% 0;
+  }
 }

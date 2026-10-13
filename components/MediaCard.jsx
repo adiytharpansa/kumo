@@ -1,36 +1,30 @@
 import Link from 'next/link';
 
-// Kartu katalog (presentasional; dipakai Server Components).
-export default function MediaCard({ item, badge }) {
+// Kartu poster sesuai berkas desain (.poster): gambar 2:3 radius
+// 14px dengan bayangan, judul menimpa bagian bawah poster, pil
+// tag gradasi di kiri atas; di bawahnya judul + baris sub.
+// - badge: teks pil (mis. "EP 12" untuk rilisan terbaru).
+// - sub: baris kecil di bawah judul (mis. tipe / genre).
+export default function MediaCard({ item, badge, sub }) {
   if (!item) return null;
-  const title = typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || '';
+  const title =
+    typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || '';
+  const href = `/details/${encodeURIComponent(item.id)}`;
+  const subText = sub || [item.type, item.releaseDate].filter(Boolean).join(' · ');
   return (
-    <Link
-      href={`/details/${encodeURIComponent(item.id)}`}
-      className="group block overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 transition hover:ring-violet-400/60"
-    >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-white/5">
+    <div className="c">
+      <Link href={href} className="poster">
         {item.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.image}
-            alt={title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          />
+          <img src={item.image} alt={title} loading="lazy" />
         ) : null}
-        {badge ? (
-          <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-violet-300">
-            {badge}
-          </span>
-        ) : null}
+        {badge ? <span className="ptag">{badge}</span> : null}
+        <b>{title}</b>
+      </Link>
+      <div className="t">
+        {title}
+        {subText ? <span className="sub">{subText}</span> : null}
       </div>
-      <div className="p-2.5">
-        <div className="line-clamp-2 min-h-10 text-[13px] font-medium leading-snug">{title}</div>
-        <div className="mt-1 text-[11px] text-zinc-400">
-          {[item.type, item.releaseDate].filter(Boolean).join(' · ')}
-        </div>
-      </div>
-    </Link>
+    </div>
   );
 }

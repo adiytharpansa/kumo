@@ -18,7 +18,21 @@ export default function AdPlacement() {
     <>
       <div
         id="ad-placement-container"
-        className="ad-placement-container mx-auto my-4 flex min-h-20 w-full max-w-3xl items-center justify-center rounded-xl border border-dashed border-white/15 text-[11px] uppercase tracking-widest text-zinc-500"
+        className="ad-placement-container"
+        style={{
+          margin: '16px 0',
+          minHeight: 80,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1.5px dashed var(--ln)',
+          borderRadius: 20,
+          color: 'var(--mu)',
+          fontSize: 11,
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+        }}
         data-ad-slot="below-player"
       >
         {srcs.length === 0 ? 'Ad Placement' : null}

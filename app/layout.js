@@ -1,41 +1,31 @@
 import './globals.css';
-import Link from 'next/link';
+import AppShell from '../components/AppShell';
 
 export const metadata = {
-  title: 'Media Hub — Dynamic Media Metadata Aggregation',
-  description: 'Educational boilerplate: server-side media metadata aggregation hub.',
+  title: 'Kumo – Nonton Anime',
+  description: 'Kumo — nonton anime dengan katalog dan episode langsung dari sumbernya.',
 };
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0b0b14',
+  themeColor: '#0d0b1a',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="id">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0b14]/90 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
-            <Link href="/" className="text-lg font-extrabold tracking-tight">
-              MEDIA<span className="text-violet-400">HUB</span>
-            </Link>
-            <span className="ml-3 hidden text-xs text-zinc-500 sm:inline">
-              Dynamic Media Metadata Aggregation
-            </span>
-            <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-zinc-300">
-              <Link href="/my-list" className="transition hover:text-white">
-                My List
-              </Link>
-              <Link href="/akun" className="transition hover:text-white">
-                Account
-              </Link>
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-6xl px-4 pb-16">{children}</main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

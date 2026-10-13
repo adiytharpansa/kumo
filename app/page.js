@@ -2,12 +2,16 @@ import Link from 'next/link';
 import { getRecentReleases, getTrending } from '../lib/provider';
 import MediaCard from '../components/MediaCard';
 import ServerBusy from '../components/ServerBusy';
+import Hero from '../components/Hero';
+import ContinueWatching from '../components/ContinueWatching';
 
 export const revalidate = 300;
 
-// [Main Dashboard Hub] Server Component asinkron:
-// mengambil "Recent Releases" + "Top Trending Content" dari provider
-// server-side dan merender grid responsif Tailwind.
+const GENRE_PREVIEW = ['Action', 'Romance', 'Comedy', 'Fantasy', 'Drama', 'Sci-Fi', 'Horror', 'Sports'];
+
+// Beranda sesuai berkas desain: hero layar penuh judul tren,
+// Lanjutkan menonton (riwayat asli perangkat), Baru rilis,
+// Sedang Tren, dan chip genre. Semua isi data asli provider.
 export default async function HomePage() {
   const [recent, trending] = await Promise.all([getRecentReleases(1), getTrending()]);
   const recentList = (recent && recent.results) || [];
@@ -18,42 +22,51 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="pt-5">
+    <div>
+      <Hero items={trendingList} />
+
+      <ContinueWatching />
+
+      {recentList.length ? (
+        <section>
+          <h2 className="sec">Baru rilis</h2>
+          <div className="sc lg">
+            {recentList.map((item) => (
+              <MediaCard
+                key={String(item.episodeId || item.id) + '-' + (item.episodeNumber || '')}
+                item={item}
+                badge={item.episodeNumber ? `EP ${item.episodeNumber}` : undefined}
+                sub={item.episodeNumber ? `Episode ${item.episodeNumber} · Subtitle Inggris` : undefined}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {trendingList.length ? (
         <section>
-          <h1 className="mb-3 text-lg font-bold">Top Trending Content</h1>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {trendingList.slice(0, 12).map((item) => (
+          <h2 className="sec">Sedang Tren</h2>
+          <div className="sc lg">
+            {trendingList.map((item) => (
               <MediaCard key={item.id} item={item} />
             ))}
           </div>
         </section>
       ) : null}
 
-      {recentList.length ? (
-        <section className="mt-8">
-          <h2 className="mb-3 text-lg font-bold">Recent Releases</h2>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {recentList.map((item) => {
-              const epId = item.episodeId || item.id;
-              return (
-                <div key={String(epId) + '-' + (item.episodeNumber || '')}>
-                  <MediaCard
-                    item={item}
-                    badge={item.episodeNumber ? `Ep ${item.episodeNumber}` : undefined}
-                  />
-                  <Link
-                    href={`/watch/${encodeURIComponent(epId)}`}
-                    className="mt-1.5 block rounded-lg bg-violet-600/90 py-1.5 text-center text-xs font-semibold text-white"
-                  >
-                    ▶ Watch
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+      <section>
+        <h2 className="sec">Genre populer</h2>
+        <div className="chips">
+          {GENRE_PREVIEW.map((g) => (
+            <Link key={g} href={`/genre?g=${encodeURIComponent(g)}`} className="chip">
+              {g}
+            </Link>
+          ))}
+          <Link href="/genre" className="chip">
+            Semua genre ›
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

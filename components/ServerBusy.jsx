@@ -1,18 +1,15 @@
 export default function ServerBusy() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-20 text-center">
-      <div className="text-5xl" aria-hidden>
+    <div style={{ padding: '80px 18px', textAlign: 'center' }}>
+      <div style={{ fontSize: 44 }} aria-hidden>
         🔌
       </div>
-      <h2 className="mt-4 text-xl font-bold">Server Connection Busy</h2>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+      <h2 style={{ marginTop: 14, fontSize: 21, fontWeight: 800 }}>Server Connection Busy</h2>
+      <p style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, color: 'var(--mu)' }}>
         The metadata source could not be reached right now (it may be busy, rate-limiting, or
         updating its domain). Please reload in a few minutes — nothing is wrong with your device.
       </p>
-      <a
-        href=""
-        className="mt-6 inline-block rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white"
-      >
+      <a href="" className="btn go" style={{ marginTop: 22 }}>
         Reload
       </a>
     </div>

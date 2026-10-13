@@ -1,17 +1,13 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
+import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 
-// Kerangka aplikasi sesuai desain: kolom tengah maks 480px.
-// Halaman detail & nonton memakai mode "flush" (konten menempel
-// ke tepi kolom untuk hero/pemutar layar penuh kolom).
+// Kerangka aplikasi sesuai berkas desain: kolom tengah, bar atas
+// lengket (melayang di beranda), navigasi bawah 5 tab.
 export default function AppShell({ children }) {
-  const pathname = usePathname() || '/';
-  const flush = pathname.startsWith('/watch') || pathname.startsWith('/details');
   return (
-    <div className={flush ? 'appcol flush' : 'appcol'}>
-      {children}
+    <div className="appcol">
+      <TopBar />
+      <main>{children}</main>
       <BottomNav />
     </div>
   );
