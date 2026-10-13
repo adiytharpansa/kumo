@@ -1,5 +1,0 @@
-{
-  "functions": {
-    "api/graphql.js": { "maxDuration": 10 }
-  }
-}
