@@ -176,7 +176,16 @@ export default function KaaResolver({ title, ep, iframeUrl, serverM3u8, serverSu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, ep]);
 
-  if (hit) return <Player m3u8={hit.m3u8} subtitle={hit.subtitle} iframeUrl={iframeUrl} />;
+  if (hit)
+    return (
+      <Player
+        m3u8={hit.m3u8}
+        subtitle={hit.subtitle}
+        iframeUrl={iframeUrl}
+        title={title}
+        episodeLabel={ep !== null && ep !== undefined && ep !== '' ? `Episode ${ep}` : ''}
+      />
+    );
 
   if (!gaveUp) {
     return (
