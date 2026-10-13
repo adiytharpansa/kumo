@@ -2,3 +2,5 @@ node_modules/
 .next/
 arsip-proyek-lama/
 .env*.local
+.open-next/
+.wrangler/
