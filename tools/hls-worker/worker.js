@@ -121,7 +121,23 @@ async function handleHls(request, url) {
 
 const KAA = 'https://kaa.lt';
 const HLS_HOST = 'https://hls.krussdomi.com/manifest';
-const JH = { 'user-agent': UA, accept: 'application/json' };
+// API katalog berada di balik pemeriksaan bot Cloudflare yang
+// menantang permintaan ber-header minim ("Just a moment...") —
+// pakai set header peramban lengkap + referer situsnya sendiri,
+// pola yang terbukti lolos pada rute /px.
+const JH = {
+  'user-agent': UA,
+  accept: 'application/json, text/plain, */*',
+  'accept-language': 'en-US,en;q=0.9,id;q=0.8',
+  referer: 'https://kaa.lt/',
+  origin: 'https://kaa.lt',
+  'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-origin',
+};
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -375,7 +391,7 @@ function jsonResp(obj, status, maxAge) {
 
 // Versi kunci cache tepi — naikkan untuk membuang entri basi
 // setiap logika resolusi berubah.
-const CACHE_VER = '4';
+const CACHE_VER = '5';
 
 function cacheKey(url, params) {
   const qs = new URLSearchParams({ cv: CACHE_VER, ...params });
@@ -396,10 +412,15 @@ async function handleResolve(url, ctx, request) {
   const ep = parseFloat(url.searchParams.get('ep') || '');
   let out = null;
   if (title && Number.isFinite(ep)) {
-    const candidates = await resolveCandidates(title, year).catch(() => []);
-    for (const show of candidates.slice(0, 3)) {
-      out = await streamForShow(show, ep, url.origin);
-      if (out) break;
+    // Dua percobaan penuh: pemeriksaan bot hulu bersifat
+    // probabilistik antar-permintaan.
+    for (let attempt = 0; attempt < 2 && !out; attempt++) {
+      const candidates = await resolveCandidates(title, year).catch(() => []);
+      for (const show of candidates.slice(0, 3)) {
+        out = await streamForShow(show, ep, url.origin);
+        if (out) break;
+      }
+      if (!out && attempt === 0) await sleep(600);
     }
   }
   const resp = out ? jsonResp(out, 200, 3600) : jsonResp({ error: 'not found' }, 404, 30);
@@ -419,15 +440,18 @@ async function handleEps(url, ctx, request) {
   const year = url.searchParams.get('year') || '';
   let payload = null;
   if (title) {
-    const candidates = await resolveCandidates(title, year).catch(() => []);
-    const show = candidates[0];
-    if (show) {
-      const numbers = await episodeNumbers(show.slug).catch(() => []);
-      let playable = false;
-      if (numbers.length) {
-        playable = !!(await streamForShow(show, numbers[0], url.origin).catch(() => null));
+    for (let attempt = 0; attempt < 2 && !payload; attempt++) {
+      const candidates = await resolveCandidates(title, year).catch(() => []);
+      const show = candidates[0];
+      if (show) {
+        const numbers = await episodeNumbers(show.slug).catch(() => []);
+        let playable = false;
+        if (numbers.length) {
+          playable = !!(await streamForShow(show, numbers[0], url.origin).catch(() => null));
+        }
+        payload = { slug: show.slug, score: show.score, numbers, playable };
       }
-      payload = { slug: show.slug, score: show.score, numbers, playable };
+      if (!payload && attempt === 0) await sleep(600);
     }
   }
   const resp = payload ? jsonResp(payload, 200, 3600) : jsonResp({ error: 'not found' }, 404, 30);
