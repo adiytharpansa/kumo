@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Pemutar media sisi klien:
-// - .m3u8 langsung -> ArtPlayer + Hls.js.
+// - .m3u8 langsung -> ArtPlayer + Hls.js (+ subtitle .vtt bila ada).
 // - Gagal/tidak ada -> fallback iframe server embed.
-export default function Player({ m3u8, iframeUrl }) {
+export default function Player({ m3u8, subtitle, iframeUrl }) {
   const boxRef = useRef(null);
   const [useIframe, setUseIframe] = useState(!m3u8);
 
@@ -27,6 +27,18 @@ export default function Player({ m3u8, iframeUrl }) {
         playbackRate: true,
         setting: true,
         pip: true,
+        subtitleOffset: true,
+        ...(subtitle
+          ? {
+              subtitle: {
+                url: subtitle,
+                type: 'vtt',
+                encoding: 'utf-8',
+                default: true,
+                style: { color: '#fff', 'font-size': '16px' },
+              },
+            }
+          : {}),
         customType: {
           m3u8: (video, url) => {
             if (Hls.isSupported()) {

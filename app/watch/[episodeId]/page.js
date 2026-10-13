@@ -48,7 +48,11 @@ export default async function WatchPage({ params }) {
 
       <div style={{ position: 'relative' }}>
         {/* Wadah media */}
-        <Player m3u8={stream ? stream.url : null} iframeUrl={iframeUrl} />
+        <Player
+          m3u8={stream ? stream.url : null}
+          subtitle={stream ? stream.subtitle : null}
+          iframeUrl={iframeUrl}
+        />
         <Link href={`/details/${encodeURIComponent(animeId)}`} className="x" style={{ top: 10, left: 10 }} aria-label="Kembali ke detail">
           ←
         </Link>
@@ -63,7 +67,8 @@ export default async function WatchPage({ params }) {
         </h1>
         <p style={{ color: 'var(--mu)', fontSize: 13, marginTop: 2 }}>
           {epNum ? `Episode ${epNum}` : 'Episode'}
-          {info && info.type ? ` · ${info.type}` : ''} · Subtitle Inggris
+          {info && info.type ? ` · ${info.type}` : ''} ·{' '}
+          {stream && stream.audio === 'dub' ? 'Dub Inggris' : 'Subtitle Inggris'}
         </p>
 
         <div className="actrow" style={{ marginTop: 14 }}>
