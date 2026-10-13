@@ -34,7 +34,6 @@ export default function TopBar() {
   return (
     <header className={hm ? 'top hm' : 'top'}>
       <Link href="/" className="logo">
-        <span className="lm">☁</span>
         kumo<i>.</i>
       </Link>
       {user ? (
