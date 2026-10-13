@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getDetails } from '../../../lib/provider';
 import ServerBusy from '../../../components/ServerBusy';
+import SaveButton from '../../../components/SaveButton';
 
 export const revalidate = 3600;
 
@@ -69,6 +70,7 @@ export default async function DetailsPage({ params }) {
           {info.description ? (
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300">{info.description}</p>
           ) : null}
+          <SaveButton id={info.id} title={titleOf(info)} image={info.image} />
         </div>
       </div>
 

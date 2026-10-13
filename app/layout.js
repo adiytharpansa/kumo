@@ -25,6 +25,14 @@ export default function RootLayout({ children }) {
             <span className="ml-3 hidden text-xs text-zinc-500 sm:inline">
               Dynamic Media Metadata Aggregation
             </span>
+            <nav className="ml-auto flex items-center gap-4 text-sm font-medium text-zinc-300">
+              <Link href="/my-list" className="transition hover:text-white">
+                My List
+              </Link>
+              <Link href="/akun" className="transition hover:text-white">
+                Account
+              </Link>
+            </nav>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 pb-16">{children}</main>
