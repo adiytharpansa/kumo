@@ -4,52 +4,80 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabase';
+import { fetchOwnProfile, profileDisplayName, profileInitial, profilePhoto } from '../lib/profile';
 
-// Bar atas: logo "kumo." di kiri. Di kanan HANYA tampil foto
-// profil pengguna SETELAH masuk (permintaan pengguna): lingkaran
-// berisi foto akun (user_metadata.avatar_url/picture) bila ada,
-// atau inisial email di lingkaran gradasi. Belum masuk = kanan
-// kosong. Ketuk foto -> halaman Profil (/akun).
+// Bar atas: logo "kumo." di kiri; di kanan SELALU ada lingkaran
+// profil menuju /akun. Setelah masuk lingkaran menampilkan foto
+// profil (tabel profiles / metadata akun) bila ada, selain itu
+// inisial nama/email. Belum masuk: lingkaran berisi ikon orang,
+// sebagai pintu masuk ke halaman Profil/Masuk.
 // Di beranda bar melayang transparan di atas hero.
 export default function TopBar() {
   const pathname = usePathname() || '/';
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data && data.session ? data.session.user : null);
-    });
+    let alive = true;
+
+    const apply = async (session) => {
+      const nextUser = session ? session.user : null;
+      if (!alive) return;
+      setUser(nextUser);
+      setProfile(null);
+      if (nextUser) {
+        const own = await fetchOwnProfile(nextUser);
+        if (alive) setProfile(own);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => apply(data && data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session ? session.user : null);
+      apply(session);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const hm = pathname === '/';
-  const meta = (user && user.user_metadata) || {};
-  const photo = meta.avatar_url || meta.picture || null;
-  const initial = user && user.email ? user.email[0].toUpperCase() : '';
+  const photo = profilePhoto(user, profile);
+  const name = profileDisplayName(user, profile);
+  const initial = profileInitial(user, profile);
 
   return (
     <header className={hm ? 'top hm' : 'top'}>
       <Link href="/" className="logo">
         kumo<i>.</i>
       </Link>
-      {user ? (
-        <Link href="/akun" className="ib avb" aria-label="Profil" style={{ overflow: 'hidden', padding: 0 }}>
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={photo}
-              alt="Foto profil"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+      <Link
+        href="/akun"
+        className="ib avb profile-btn"
+        aria-label={user ? `Profil ${name}` : 'Profil — masuk atau buat akun'}
+        title={user ? name : 'Profil'}
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="Foto profil" />
+        ) : user ? (
+          initial
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+              fill="currentColor"
             />
-          ) : (
-            initial
-          )}
-        </Link>
-      ) : null}
+            <path
+              d="M4.6 20.1c.8-3.2 3.8-5.1 7.4-5.1s6.6 1.9 7.4 5.1"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
+      </Link>
     </header>
   );
 }

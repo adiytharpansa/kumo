@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { fetchOwnProfile, profileDisplayName, profileInitial, profilePhoto } from '../../lib/profile';
 import { readList, syncList, LIST_EVENT } from '../../lib/list';
 import { readHistory, HISTORY_KEY } from '../../components/ContinueWatching';
 
@@ -21,6 +22,11 @@ export default function AccountPage() {
   const [syncMsg, setSyncMsg] = useState('');
   const [listCount, setListCount] = useState(0);
   const [history, setHistory] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [profileMsg, setProfileMsg] = useState('');
+  const [profileBusy, setProfileBusy] = useState(false);
 
   useEffect(() => {
     const refresh = () => {
@@ -38,16 +44,40 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!supabase) return;
+    let alive = true;
+
+    const applyUser = async (sessionUser) => {
+      if (!alive) return;
+      setUser(sessionUser || null);
+      if (!sessionUser) {
+        setProfile(null);
+        setDisplayName('');
+        setAvatarUrl('');
+        return;
+      }
+      const own = await fetchOwnProfile(sessionUser);
+      if (!alive) return;
+      const meta = sessionUser.user_metadata || {};
+      setProfile(own);
+      setDisplayName(
+        (own && own.display_name) || meta.display_name || meta.full_name || meta.name || ''
+      );
+      setAvatarUrl((own && own.avatar_url) || meta.avatar_url || meta.picture || '');
+    };
+
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data && data.session ? data.session.user : null);
+      applyUser(data && data.session ? data.session.user : null);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session ? session.user : null);
+      applyUser(session ? session.user : null);
       if (event === 'SIGNED_IN') {
         syncList().then((r) => setSyncMsg(r.ok ? 'Daftarku tersinkron.' : ''));
       }
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   if (!isSupabaseConfigured) {
@@ -92,7 +122,64 @@ export default function AccountPage() {
   async function signOut() {
     await supabase.auth.signOut();
     setUser(null);
+    setProfile(null);
+    setDisplayName('');
+    setAvatarUrl('');
+    setProfileMsg('');
     setSyncMsg('');
+  }
+
+  async function saveProfile(e) {
+    e.preventDefault();
+    if (!user) return;
+    setProfileBusy(true);
+    setProfileMsg('');
+    const cleanName = displayName.trim();
+    const cleanAvatar = avatarUrl.trim();
+    try {
+      // Metadata akun diperbarui dulu agar lingkaran profil langsung
+      // memakai nama/foto ini walau SQL profil belum dijalankan.
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          display_name: cleanName || null,
+          avatar_url: cleanAvatar || null,
+          picture: cleanAvatar || null,
+        },
+      });
+      if (error) throw error;
+      if (data && data.user) setUser(data.user);
+
+      let tableSaved = true;
+      try {
+        const { error: tableError } = await supabase.from('profiles').upsert(
+          {
+            id: user.id,
+            email: user.email,
+            display_name: cleanName || null,
+            avatar_url: cleanAvatar || null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+        if (tableError) tableSaved = false;
+      } catch (err) {
+        tableSaved = false;
+      }
+
+      setProfile({
+        display_name: cleanName || null,
+        avatar_url: cleanAvatar || null,
+      });
+      setProfileMsg(
+        tableSaved
+          ? 'Profil tersimpan. Lingkaran kanan atas memakai nama/foto ini.'
+          : 'Profil tersimpan di akun. Untuk penyimpanan tabel profiles, jalankan supabase/profiles-avatar.sql di SQL Editor Supabase.'
+      );
+    } catch (err) {
+      setProfileMsg(`Simpan profil gagal: ${String((err && err.message) || err)}`);
+    } finally {
+      setProfileBusy(false);
+    }
   }
 
   async function manualSync() {
@@ -108,17 +195,24 @@ export default function AccountPage() {
     setHistory([]);
   }
 
-  const initial = (user && user.email ? user.email[0] : '☺').toUpperCase();
+  const photo = profilePhoto(user, profile);
+  const shownName = user ? profileDisplayName(user, profile) : 'Penonton';
+  const initial = user ? profileInitial(user, profile) : '☺';
 
   return (
     <div>
       <div className="pf">
         <div className="av" aria-hidden>
-          {initial}
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt="" />
+          ) : (
+            initial
+          )}
         </div>
         <div className="who">
-          <b>{user ? user.email : 'Penonton'}</b>
-          <small>{user ? 'Kamu sedang masuk' : 'Belum masuk — Daftarku tersimpan lokal'}</small>
+          <b>{shownName}</b>
+          <small>{user ? `Masuk sebagai ${user.email}` : 'Belum masuk — Daftarku tersimpan lokal'}</small>
         </div>
       </div>
 
@@ -151,6 +245,37 @@ export default function AccountPage() {
             <button type="button" onClick={manualSync} className="btn go" style={{ width: '100%', marginTop: 12 }}>
               ↻ Sinkronkan Daftarku
             </button>
+
+            <form onSubmit={saveProfile} style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--ln)' }}>
+              <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Profil tampilan</p>
+              <label style={{ display: 'block', marginBottom: 10 }}>
+                <small style={{ display: 'block', color: 'var(--mu)', marginBottom: 4 }}>Nama tampilan</small>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="kin"
+                  placeholder="Nama kamu"
+                  maxLength={60}
+                />
+              </label>
+              <label style={{ display: 'block' }}>
+                <small style={{ display: 'block', color: 'var(--mu)', marginBottom: 4 }}>URL foto profil</small>
+                <input
+                  type="url"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  className="kin"
+                  placeholder="https://contoh.com/foto.jpg"
+                />
+              </label>
+              <button type="submit" disabled={profileBusy} className="btn go" style={{ width: '100%', marginTop: 12 }}>
+                {profileBusy ? 'Menyimpan…' : 'Simpan Profil'}
+              </button>
+              {profileMsg ? (
+                <p style={{ fontSize: 13, color: 'var(--mu)', marginTop: 8, lineHeight: 1.5 }}>{profileMsg}</p>
+              ) : null}
+            </form>
           </div>
           <button type="button" className="outl" onClick={signOut}>
             ⎋ Keluar
