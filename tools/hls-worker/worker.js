@@ -459,12 +459,70 @@ async function handleEps(url, ctx, request) {
   return resp;
 }
 
+// Penerus POST pencarian katalog untuk resolusi SISI KLIEN:
+// peramban ponsel pengguna yang menjalankan pencarian (IP
+// rumahan lolos pemeriksaan bot), worker hanya meneruskan
+// dengan header lengkap + CORS terbuka.
+async function handleFsearch(request) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-headers': 'content-type',
+        'access-control-max-age': '86400',
+      },
+    });
+  }
+  if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
+  let body = '';
+  try {
+    body = await request.text();
+  } catch (e) {}
+  let lastErr = null;
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await fetch(`${KAA}/api/fsearch`, {
+        method: 'POST',
+        headers: { ...JH, 'content-type': 'application/json' },
+        body,
+        signal: AbortSignal.timeout(8000),
+      });
+      const txt = await r.text();
+      return new Response(txt, {
+        status: r.status,
+        headers: {
+          'content-type': 'application/json',
+          'access-control-allow-origin': '*',
+        },
+      });
+    } catch (e) {
+      lastErr = e;
+      await sleep(400);
+    }
+  }
+  return jsonResp({ error: String((lastErr && lastErr.message) || lastErr) }, 502, 0);
+}
+
+// Daftar subtitle sebuah pemutar sumber (dipakai resolusi klien).
+async function handleSubs(url) {
+  const src = url.searchParams.get('u') || '';
+  if (!src || !/^https:\/\/krussdomi\.com\//i.test(src)) {
+    return jsonResp({ subtitles: [] }, 200, 60);
+  }
+  const subtitles = await subtitlesFor(src, url.origin);
+  return jsonResp({ subtitles }, 200, 3600);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === '/hls') return handleHls(request, url);
     if (url.pathname === '/resolve') return handleResolve(url, ctx, request);
     if (url.pathname === '/eps') return handleEps(url, ctx, request);
+    if (url.pathname === '/fsearch') return handleFsearch(request);
+    if (url.pathname === '/subs') return handleSubs(url);
     return new Response('not found', { status: 404 });
   },
 }

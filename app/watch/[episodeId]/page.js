@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { getStreamSources, getStreamServers, pickStream, getDetails } from '../../../lib/provider';
-import Player from '../../../components/Player';
+import KaaResolver from '../../../components/KaaResolver';
 import AdPlacement from '../../../components/AdPlacement';
-import ServerBusy from '../../../components/ServerBusy';
 import SaveButton from '../../../components/SaveButton';
 import ShareButton from '../../../components/ShareButton';
 import HistoryPing from '../../../components/HistoryPing';
@@ -32,10 +31,9 @@ export default async function WatchPage({ params }) {
   ]);
   const stream = pickStream(sources);
   const iframeUrl = (servers && servers[0] && servers[0].url) || null;
-
-  if (!stream && !iframeUrl) {
-    return <ServerBusy />;
-  }
+  // Tanpa hasil server pun halaman tetap dirender: resolusi
+  // stream utama kini juga dicoba dari peramban pengguna
+  // (KaaResolver) yang jaringannya dilayani katalog sumber.
 
   const title = titleOf(info, animeId.replace(/-/g, ' '));
   const episodes = [...((info && info.episodes) || [])].sort(
@@ -48,9 +46,11 @@ export default async function WatchPage({ params }) {
 
       <div style={{ position: 'relative' }}>
         {/* Wadah media */}
-        <Player
-          m3u8={stream ? stream.url : null}
-          subtitle={stream ? stream.subtitle : null}
+        <KaaResolver
+          title={title}
+          ep={epNum}
+          serverM3u8={stream ? stream.url : null}
+          serverSubtitle={stream ? stream.subtitle : null}
           iframeUrl={iframeUrl}
         />
         <Link href={`/details/${encodeURIComponent(animeId)}`} className="x" style={{ top: 10, left: 10 }} aria-label="Kembali ke detail">
